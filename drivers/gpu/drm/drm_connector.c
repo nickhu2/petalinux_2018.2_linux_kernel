@@ -366,20 +366,30 @@ EXPORT_SYMBOL(drm_connector_cleanup);
  */
 int drm_connector_register(struct drm_connector *connector)
 {
+	printk(KERN_WARNING "[nick] enter drm_connector_register\r\n");
+
 	int ret = 0;
 
 	if (!connector->dev->registered)
 		return 0;
 
+	printk(KERN_WARNING "[nick] drm_connector_register dev not register yet\r\n");
+
+
 	mutex_lock(&connector->mutex);
 	if (connector->registered)
 		goto unlock;
 
+	printk(KERN_WARNING "[nick] drm_connector_register not register yet\r\n");
+
+
 	ret = drm_sysfs_connector_add(connector);
+	printk(KERN_WARNING "[nick] drm_connector_register drm_sysfs_connector_add ret:%d\r\n", ret);
 	if (ret)
 		goto unlock;
 
 	ret = drm_debugfs_connector_add(connector);
+	printk(KERN_WARNING "[nick] drm_connector_register drm_debugfs_connector_add ret:%d\r\n", ret);
 	if (ret) {
 		goto err_sysfs;
 	}

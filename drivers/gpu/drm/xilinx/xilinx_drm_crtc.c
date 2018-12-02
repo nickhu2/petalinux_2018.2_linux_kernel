@@ -478,15 +478,23 @@ struct drm_crtc *xilinx_drm_crtc_create(struct drm_device *drm)
 	int possible_crtcs = 1;
 	int ret;
 
+	printk(KERN_WARNING "[nick] enter  xilinx_drm_crtc_create\r\n");
+
 	crtc = devm_kzalloc(drm->dev, sizeof(*crtc), GFP_KERNEL);
 	if (!crtc)
 		return ERR_PTR(-ENOMEM);
 
+	printk(KERN_WARNING "[nick] xilinx_drm_crtc_create devm_kzalloc finished\r\n");
+
 	/* probe chroma resampler and enable */
+	printk(KERN_WARNING "[nick] before of_parse_phandle xlnx,cresample, name: %s\r\n", drm->dev->of_node->name);
+
 	sub_node = of_parse_phandle(drm->dev->of_node, "xlnx,cresample", 0);
 	if (sub_node) {
 		crtc->cresample = xilinx_cresample_probe(drm->dev, sub_node);
 		of_node_put(sub_node);
+		printk(KERN_WARNING "[nick] after of_parse_phandle xlnx,cresample, name: %s, cresample: %x\r\n", sub_node->name, (unsigned int)crtc->cresample);
+
 		if (IS_ERR(crtc->cresample)) {
 			DRM_ERROR("failed to probe a cresample\n");
 			return ERR_CAST(crtc->cresample);
@@ -494,10 +502,13 @@ struct drm_crtc *xilinx_drm_crtc_create(struct drm_device *drm)
 	}
 
 	/* probe color space converter and enable */
+	printk(KERN_WARNING "[nick] before of_parse_phandle xlnx,rgb2yu, name: %s\r\n", drm->dev->of_node->name);
 	sub_node = of_parse_phandle(drm->dev->of_node, "xlnx,rgb2yuv", 0);
 	if (sub_node) {
 		crtc->rgb2yuv = xilinx_rgb2yuv_probe(drm->dev, sub_node);
 		of_node_put(sub_node);
+		printk(KERN_WARNING "[nick] after of_parse_phandle xlnx,rgb2yu, name: %s, cresample: %x\r\n", sub_node->name, (unsigned int)crtc->rgb2yuv);
+
 		if (IS_ERR(crtc->rgb2yuv)) {
 			DRM_ERROR("failed to probe a rgb2yuv\n");
 			return ERR_CAST(crtc->rgb2yuv);
@@ -506,6 +517,8 @@ struct drm_crtc *xilinx_drm_crtc_create(struct drm_device *drm)
 
 	/* probe a plane manager */
 	crtc->plane_manager = xilinx_drm_plane_probe_manager(drm);
+	printk(KERN_WARNING "[nick] plane manager %x\r\n", (unsigned int)crtc->plane_manager);
+
 	if (IS_ERR(crtc->plane_manager)) {
 		if (PTR_ERR(crtc->plane_manager) != -EPROBE_DEFER)
 			DRM_ERROR("failed to probe a plane manager\n");
@@ -515,6 +528,8 @@ struct drm_crtc *xilinx_drm_crtc_create(struct drm_device *drm)
 	/* create a primary plane. there's only one crtc now */
 	primary_plane = xilinx_drm_plane_create_primary(crtc->plane_manager,
 							possible_crtcs);
+	printk(KERN_WARNING "[nick] primary_plane %x\r\n", (unsigned int)primary_plane);
+
 	if (IS_ERR(primary_plane)) {
 		DRM_ERROR("failed to create a primary plane for crtc\n");
 		ret = PTR_ERR(primary_plane);
@@ -525,6 +540,9 @@ struct drm_crtc *xilinx_drm_crtc_create(struct drm_device *drm)
 	xilinx_drm_plane_create_planes(crtc->plane_manager, possible_crtcs);
 
 	crtc->pixel_clock = devm_clk_get(drm->dev, NULL);
+
+	printk(KERN_WARNING "[nick] pixel_clock %x\r\n", (unsigned int)crtc->pixel_clock);
+
 	if (IS_ERR(crtc->pixel_clock)) {
 		if (PTR_ERR(crtc->pixel_clock) == -EPROBE_DEFER) {
 			ret = PTR_ERR(crtc->pixel_clock);
@@ -536,6 +554,8 @@ struct drm_crtc *xilinx_drm_crtc_create(struct drm_device *drm)
 	}
 
 	ret = clk_prepare_enable(crtc->pixel_clock);
+	printk(KERN_WARNING "[nick] clk_prepare_enable %x\r\n", ret);
+
 	if (ret) {
 		DRM_ERROR("failed to enable a pixel clock\n");
 		crtc->pixel_clock_enabled = false;
@@ -543,10 +563,15 @@ struct drm_crtc *xilinx_drm_crtc_create(struct drm_device *drm)
 	}
 	clk_disable_unprepare(crtc->pixel_clock);
 
+	printk(KERN_WARNING "[nick] before of_parse_phandle xlnx,vtc, name: %s\r\n", drm->dev->of_node->name);
+
 	sub_node = of_parse_phandle(drm->dev->of_node, "xlnx,vtc", 0);
+
 	if (sub_node) {
 		crtc->vtc = xilinx_vtc_probe(drm->dev, sub_node);
 		of_node_put(sub_node);
+		printk(KERN_WARNING "[nick] after of_parse_phandle xlnx,vtc, name: %s, cresample: %x\r\n", sub_node->name, (unsigned int)crtc->vtc);
+
 		if (IS_ERR(crtc->vtc)) {
 			DRM_ERROR("failed to probe video timing controller\n");
 			ret = PTR_ERR(crtc->vtc);
@@ -555,6 +580,8 @@ struct drm_crtc *xilinx_drm_crtc_create(struct drm_device *drm)
 	}
 
 	crtc->dp_sub = xilinx_drm_dp_sub_of_get(drm->dev->of_node);
+	printk(KERN_WARNING "[nick] xilinx_drm_dp_sub_of_get %x\r\n", (unsigned int)crtc->dp_sub);
+
 	if (IS_ERR(crtc->dp_sub)) {
 		ret = PTR_ERR(crtc->dp_sub);
 		if (ret != -EPROBE_DEFER)
@@ -564,6 +591,7 @@ struct drm_crtc *xilinx_drm_crtc_create(struct drm_device *drm)
 
 #ifdef CONFIG_DRM_XILINX_SDI
 	crtc->sdi = xilinx_drm_sdi_of_get(drm->dev->of_node);
+	printk(KERN_WARNING "[nick] xilinx_drm_sdi_of_get %x\r\n", (unsigned int)crtc->sdi);
 	if (IS_ERR(crtc->sdi)) {
 		ret = PTR_ERR(crtc->sdi);
 		if (ret != -EPROBE_DEFER)
@@ -576,6 +604,7 @@ struct drm_crtc *xilinx_drm_crtc_create(struct drm_device *drm)
 	/* initialize drm crtc */
 	ret = drm_crtc_init_with_planes(drm, &crtc->base, primary_plane,
 					NULL, &xilinx_drm_crtc_funcs, NULL);
+	printk(KERN_WARNING "[nick] drm_crtc_init_with_planes %x\r\n", ret);
 	if (ret) {
 		DRM_ERROR("failed to initialize crtc\n");
 		goto err_pixel_clk;

@@ -1442,6 +1442,8 @@ EXPORT_SYMBOL(drm_edid_is_valid);
 static int
 drm_do_probe_ddc_edid(void *data, u8 *buf, unsigned int block, size_t len)
 {
+	printk(KERN_ERR "enter drm_do_probe_ddc_edid, data:%x, buf:%x, block:%u, len:%d\r\n", (unsigned int)data, (unsigned int)buf, block, len);
+
 	struct i2c_adapter *adapter = data;
 	unsigned char start = block * EDID_LENGTH;
 	unsigned char segment = block >> 1;
@@ -1481,6 +1483,20 @@ drm_do_probe_ddc_edid(void *data, u8 *buf, unsigned int block, size_t len)
 		 */
 		ret = i2c_transfer(adapter, &msgs[3 - xfers], xfers);
 
+		printk(KERN_ERR "adapter :%s\r\n", adapter->name);
+		if(adapter->owner != NULL)
+		{
+			printk(KERN_ERR "adapter owner:%x name :%s\r\n", (unsigned int)adapter->owner, adapter->owner->name);
+		}
+
+		printk(KERN_ERR "adapter dev name :%s\r\n", adapter->dev.init_name);
+
+		printk(KERN_ERR "alg:%x, timeout:%d, retiy:%d\r\n", (unsigned int)adapter->algo, adapter->timeout, adapter->retries);
+
+		printk(KERN_ERR "i2c_transfer xfers:%u, ret:%d\r\n", xfers, ret);
+
+		printk(KERN_ERR "drm i2c adatper addr:%x\r\n", (unsigned int)adapter);
+
 		if (ret == -ENXIO) {
 			DRM_DEBUG_KMS("drm: skipping non-existent adapter %s\n",
 					adapter->name);
@@ -1488,7 +1504,8 @@ drm_do_probe_ddc_edid(void *data, u8 *buf, unsigned int block, size_t len)
 		}
 	} while (ret != xfers && --retries);
 
-	return ret == xfers ? 0 : -1;
+	return 0;
+	//return ret == xfers ? 0 : -1;
 }
 
 static void connector_bad_edid(struct drm_connector *connector,
@@ -1632,6 +1649,8 @@ bool
 drm_probe_ddc(struct i2c_adapter *adapter)
 {
 	unsigned char out;
+
+	printk(KERN_ERR "enter drm_probe_ddc\r\n");
 
 	return (drm_do_probe_ddc_edid(adapter, &out, 0, 1) == 0);
 }

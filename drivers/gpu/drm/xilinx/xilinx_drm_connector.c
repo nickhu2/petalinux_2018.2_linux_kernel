@@ -136,6 +136,8 @@ struct drm_connector *
 xilinx_drm_connector_create(struct drm_device *drm,
 			    struct drm_encoder *base_encoder, int id)
 {
+	printk(KERN_WARNING "[nick] enter xilinx_drm_connector_create\r\n");
+
 	struct xilinx_drm_connector *connector;
 	const char *string;
 	int type = DRM_MODE_CONNECTOR_Unknown;
@@ -145,12 +147,17 @@ xilinx_drm_connector_create(struct drm_device *drm,
 	if (!connector)
 		return ERR_PTR(-ENOMEM);
 
+	printk(KERN_WARNING "[nick] xilinx_drm_connector_create devm_kzalloc successfully\r\n");
+
 	connector->base.polled = DRM_CONNECTOR_POLL_HPD |
 				 DRM_CONNECTOR_POLL_CONNECT |
 				 DRM_CONNECTOR_POLL_DISCONNECT;
 
 	ret = of_property_read_string_index(drm->dev->of_node,
 					    "xlnx,connector-type", id, &string);
+
+	printk(KERN_WARNING "[nick] xilinx_drm_connector_create ret:%d\r\n", ret);
+
 	if (ret < 0) {
 		dev_err(drm->dev, "No connector type in DT\n");
 		return ERR_PTR(ret);
@@ -162,6 +169,9 @@ xilinx_drm_connector_create(struct drm_device *drm,
 			break;
 		}
 
+	printk(KERN_WARNING "[nick] xilinx_drm_connector_create type:%d\r\n", type);
+
+
 	if (type == DRM_MODE_CONNECTOR_Unknown) {
 		dev_err(drm->dev, "Unknown connector type in DT\n");
 		return ERR_PTR(-EINVAL);
@@ -169,6 +179,9 @@ xilinx_drm_connector_create(struct drm_device *drm,
 
 	ret = drm_connector_init(drm, &connector->base,
 				 &xilinx_drm_connector_funcs, type);
+
+	printk(KERN_WARNING "[nick] xilinx_drm_connector_create drm_connector_init ret:%d\r\n", ret);
+
 	if (ret) {
 		DRM_ERROR("failed to initialize connector\n");
 		return ERR_PTR(ret);
@@ -179,6 +192,9 @@ xilinx_drm_connector_create(struct drm_device *drm,
 
 	/* add entry for connector */
 	ret = drm_connector_register(&connector->base);
+
+	printk(KERN_WARNING "[nick] xilinx_drm_connector_create drm_connector_register ret:%d\r\n", ret);
+
 	if (ret) {
 		DRM_ERROR("failed to register a connector\n");
 		goto err_register;

@@ -266,10 +266,13 @@ static const struct attribute_group *connector_dev_groups[] = {
 
 int drm_sysfs_connector_add(struct drm_connector *connector)
 {
+	printk(KERN_WARNING "[nick] enter drm_sysfs_connector_add, kdev:%x, name:%s\r\n", (unsigned int)connector->kdev, connector->name);
+
 	struct drm_device *dev = connector->dev;
 
 	if (connector->kdev)
 		return 0;
+
 
 	connector->kdev =
 		device_create_with_groups(drm_class, dev->primary->kdev, 0,
@@ -279,10 +282,14 @@ int drm_sysfs_connector_add(struct drm_connector *connector)
 	DRM_DEBUG("adding \"%s\" to sysfs\n",
 		  connector->name);
 
+	printk(KERN_WARNING "[nick] kdev:%x\r\n", (unsigned int)connector->kdev);
+
 	if (IS_ERR(connector->kdev)) {
 		DRM_ERROR("failed to register connector device: %ld\n", PTR_ERR(connector->kdev));
 		return PTR_ERR(connector->kdev);
 	}
+
+	printk(KERN_WARNING "[nick] device_create_with_groups successfully\r\n");
 
 	/* Let userspace know we have a new connector */
 	drm_sysfs_hotplug_event(dev);

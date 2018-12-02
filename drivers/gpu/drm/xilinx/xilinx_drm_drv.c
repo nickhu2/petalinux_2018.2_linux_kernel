@@ -429,6 +429,8 @@ static const struct dev_pm_ops xilinx_drm_pm_ops = {
 /* init xilinx drm platform */
 static int xilinx_drm_platform_probe(struct platform_device *pdev)
 {
+	printk(KERN_WARNING "[nick] enter xilinx_drm_platform_probe\r\n");
+
 	struct xilinx_drm_private *private;
 	struct drm_device *drm;
 	struct drm_encoder *encoder;
@@ -444,6 +446,8 @@ static int xilinx_drm_platform_probe(struct platform_device *pdev)
 	if (IS_ERR(drm))
 		return PTR_ERR(drm);
 
+	printk(KERN_WARNING "[nick] xilinx_drm_platform_probe drm_dev_alloc successfully\r\n");
+
 	private = devm_kzalloc(drm->dev, sizeof(*private), GFP_KERNEL);
 	if (!private) {
 		ret = -ENOMEM;
@@ -451,6 +455,8 @@ static int xilinx_drm_platform_probe(struct platform_device *pdev)
 	}
 
 	drm_mode_config_init(drm);
+
+	printk(KERN_WARNING "[nick] xilinx_drm_platform_probe drm_mode_config_init finished\r\n");
 
 	/* create a xilinx crtc */
 	private->crtc = xilinx_drm_crtc_create(drm);
@@ -460,9 +466,23 @@ static int xilinx_drm_platform_probe(struct platform_device *pdev)
 		goto err_config;
 	}
 
+	printk(KERN_WARNING "[nick] xilinx_drm_platform_probe xilinx_drm_crtc_create successfully\r\n");
+
 	while ((encoder_node = of_parse_phandle(drm->dev->of_node,
 						"xlnx,encoder-slave", i))) {
+		if(encoder_node == NULL)
+		{
+			printk(KERN_WARNING "[nick] encoder_node is NULL\r\n");
+		}
+		else
+		{
+			printk(KERN_WARNING "[nick] encoder_node name:%s\r\n", encoder_node->name);
+		}
+
 		encoder = xilinx_drm_encoder_create(drm, encoder_node);
+
+		printk(KERN_WARNING "[nick] encoder ptr:%x\r\n", (unsigned int)encoder);
+
 		of_node_put(encoder_node);
 		if (IS_ERR(encoder)) {
 			DRM_DEBUG_DRIVER("failed to create xilinx encoder\n");
@@ -470,12 +490,16 @@ static int xilinx_drm_platform_probe(struct platform_device *pdev)
 			goto err_config;
 		}
 
+		printk(KERN_WARNING "[nick] xilinx_drm_platform_probe xilinx_drm_encoder_create successfully\r\n");
+
 		connector = xilinx_drm_connector_create(drm, encoder, i);
 		if (IS_ERR(connector)) {
 			DRM_DEBUG_DRIVER("failed to create xilinx connector\n");
 			ret = PTR_ERR(connector);
 			goto err_config;
 		}
+
+		printk(KERN_WARNING "[nick] xilinx_drm_platform_probe xilinx_drm_connector_create successfully\r\n");
 
 		i++;
 	}

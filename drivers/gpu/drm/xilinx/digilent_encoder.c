@@ -139,12 +139,16 @@ static enum drm_connector_status digilent_encoder_detect(struct drm_encoder *enc
 {
    struct digilent_encoder *digilent = to_digilent_encoder(encoder);
    
-   printk(KERN_ERR "enter digilent_encoder_detect\n");
+   printk(KERN_ERR "enter digilent_encoder_detect, i2c_present:%x, bus:%x\n", (unsigned int)digilent->i2c_present, (unsigned int)digilent->i2c_bus);
 
    if (digilent->i2c_present)
    {
       if (drm_probe_ddc(digilent->i2c_bus))
+      {
+      	 printk(KERN_ERR "i2c_present%x\n");
+
          return connector_status_connected;
+      }
       return connector_status_disconnected;
    }
    else
@@ -166,6 +170,8 @@ static int digilent_encoder_encoder_init(struct platform_device *pdev,
 				      struct drm_device *dev,
 				      struct drm_encoder_slave *encoder)
 {
+	printk(KERN_WARNING "[nick] enter digilent_encoder_encoder_init\r\n");
+
 	struct digilent_encoder *digilent = platform_get_drvdata(pdev);
 	struct device_node *sub_node;
    int ret;
@@ -173,15 +179,23 @@ static int digilent_encoder_encoder_init(struct platform_device *pdev,
 	encoder->slave_priv = digilent;
 	encoder->slave_funcs = &digilent_encoder_slave_funcs;
 
+	printk(KERN_WARNING "[nick] slave_funcs digilent_encoder_encoder_init :%x\r\n", (unsigned int)encoder->slave_funcs);
+
 	digilent->encoder = &encoder->base;
 
     /* get i2c adapter for edid */
-   digilent->i2c_present = false;
+    digilent->i2c_present = false;
 
 	sub_node = of_parse_phandle(pdev->dev.of_node, "digilent,edid-i2c", 0);
+
+	printk(KERN_WARNING "[nick] sub_node of encoder:%x\r\n", (unsigned int)sub_node);
+
 	if (sub_node) 
    {
 	   digilent->i2c_bus = of_find_i2c_adapter_by_node(sub_node);
+
+	   printk(KERN_WARNING "[nick] i2c_bus of encoder:%x\r\n", (unsigned int)digilent->i2c_bus);
+
       if (!digilent->i2c_bus)
 		   DRM_INFO("failed to get the edid i2c adapter, using default modes\n");
       else
@@ -226,6 +240,8 @@ static int digilent_encoder_encoder_init(struct platform_device *pdev,
 
 static int digilent_encoder_probe(struct platform_device *pdev)
 {
+	printk(KERN_WARNING "[nick] enter digilent_encoder_probe\r\n");
+
 	struct digilent_encoder *digilent;
 
 	digilent = devm_kzalloc(&pdev->dev, sizeof(*digilent), GFP_KERNEL);
@@ -264,6 +280,8 @@ static struct drm_platform_encoder_driver digilent_encoder_driver = {
 
 static int __init digilent_encoder_init(void)
 {
+	printk(KERN_WARNING "[nick] enter digilent_encoder_init\r\n");
+
 	return platform_driver_register(&digilent_encoder_driver.platform_driver);
 }
 

@@ -150,6 +150,8 @@ static const struct drm_encoder_funcs xilinx_drm_encoder_funcs = {
 struct drm_encoder *xilinx_drm_encoder_create(struct drm_device *drm,
 					      struct device_node *node)
 {
+	printk(KERN_WARNING "[nick] enter xilinx_drm_encoder_create\r\n");
+
 	struct xilinx_drm_encoder *encoder;
 	struct i2c_client *i2c_slv;
 	struct i2c_driver *i2c_driver;
@@ -164,6 +166,8 @@ struct drm_encoder *xilinx_drm_encoder_create(struct drm_device *drm,
 	if (!encoder)
 		return ERR_PTR(-ENOMEM);
 
+	printk(KERN_WARNING "[nick] after devm_kzalloc\r\n");
+
 	encoder->dpms = DRM_MODE_DPMS_OFF;
 
 	/* FIXME: Use DT to figure out crtcs / clones */
@@ -172,6 +176,10 @@ struct drm_encoder *xilinx_drm_encoder_create(struct drm_device *drm,
 	ret = drm_encoder_init(drm, &encoder->slave.base,
 			       &xilinx_drm_encoder_funcs,
 			       DRM_MODE_ENCODER_TMDS, NULL);
+
+	printk(KERN_WARNING "[nick] ret:%d after drm_encoder_init\r\n", ret);
+
+
 	if (ret) {
 		DRM_ERROR("failed to initialize drm encoder\n");
 		return ERR_PTR(ret);
@@ -182,9 +190,13 @@ struct drm_encoder *xilinx_drm_encoder_create(struct drm_device *drm,
 
 	/* initialize slave encoder */
 	i2c_slv = of_find_i2c_device_by_node(node);
+
 	if (i2c_slv && i2c_slv->dev.driver) {
 		i2c_driver = to_i2c_driver(i2c_slv->dev.driver);
 		drm_i2c_driver = to_drm_i2c_encoder_driver(i2c_driver);
+
+		printk(KERN_WARNING "[nick] drm_i2c_driver %x\r\n", (unsigned int)drm_i2c_driver);
+
 		if (!drm_i2c_driver || !drm_i2c_driver->encoder_init) {
 			DRM_DEBUG_KMS("failed to initialize i2c slave\n");
 			ret = -EPROBE_DEFER;
@@ -194,12 +206,22 @@ struct drm_encoder *xilinx_drm_encoder_create(struct drm_device *drm,
 		encoder->dev = &i2c_slv->dev;
 		ret = drm_i2c_driver->encoder_init(i2c_slv, drm,
 						   &encoder->slave);
+
+		printk(KERN_WARNING "[nick] drm_i2c_driver ret %d\r\n", ret);
+
 	} else {
 		platform_slv = of_find_device_by_node(node);
+
+		printk(KERN_WARNING "[nick]  platform_slv %x\r\n", (unsigned int)platform_slv);
+
+
 		if (!platform_slv) {
 			DRM_DEBUG_KMS("failed to get an encoder slv\n");
+
 			return ERR_PTR(-EPROBE_DEFER);
 		}
+
+		printk(KERN_WARNING "[nick]  device_driver %x\r\n", (unsigned int)platform_slv->dev.driver);
 
 		device_driver = platform_slv->dev.driver;
 		if (!device_driver) {
@@ -208,8 +230,14 @@ struct drm_encoder *xilinx_drm_encoder_create(struct drm_device *drm,
 		}
 
 		platform_driver = to_platform_driver(device_driver);
+
+		printk(KERN_WARNING "[nick]  platform_driver %x\r\n", (unsigned int)platform_driver);
+
 		drm_platform_driver =
 			to_drm_platform_encoder_driver(platform_driver);
+
+		printk(KERN_WARNING "[nick]  drm_platform_driver %x\r\n", (unsigned int)drm_platform_driver);
+
 		if (!drm_platform_driver ||
 		    !drm_platform_driver->encoder_init) {
 			DRM_DEBUG_KMS("failed to initialize platform slave\n");
@@ -217,15 +245,21 @@ struct drm_encoder *xilinx_drm_encoder_create(struct drm_device *drm,
 			goto err_out;
 		}
 
+		printk(KERN_WARNING "[nick]  drm_platform_driver init begin\r\n");
+
 		encoder->dev = &platform_slv->dev;
 		ret = drm_platform_driver->encoder_init(platform_slv, drm,
 							&encoder->slave);
+
+		printk(KERN_WARNING "[nick]  ret %d\r\n", ret);
 	}
 
 	if (ret) {
 		DRM_ERROR("failed to initialize encoder slave\n");
 		goto err_out;
 	}
+
+	printk(KERN_WARNING "[nick]  slave_funcs %x\r\n", (unsigned int)encoder->slave.slave_funcs);
 
 	if (!encoder->slave.slave_funcs) {
 		DRM_ERROR("there's no encoder slave function\n");

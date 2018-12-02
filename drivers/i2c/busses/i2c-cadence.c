@@ -407,6 +407,11 @@ static irqreturn_t cdns_i2c_master_isr(void *ptr)
 	irqreturn_t status = IRQ_NONE;
 
 	isr_status = cdns_i2c_readreg(CDNS_I2C_ISR_OFFSET);
+
+	printk(KERN_ERR "[nick] id info membase:%x\r\n", (unsigned int)id->membase);
+
+	printk(KERN_ERR "[nick] isr_status in cdns_i2c_master_is:%x\r\n", isr_status);
+
 	cdns_i2c_writereg(isr_status, CDNS_I2C_ISR_OFFSET);
 
 	/* Handling nack and arbitration lost interrupt */
@@ -560,6 +565,9 @@ static irqreturn_t cdns_i2c_master_isr(void *ptr)
 
 	/* Update the status for errors */
 	id->err_status = isr_status & CDNS_I2C_IXR_ERR_INTR_MASK;
+
+	printk(KERN_ERR "id->err_status in cdns_i2c_master_is:%d\r\n", id->err_status);
+
 	if (id->err_status)
 		status = IRQ_HANDLED;
 
@@ -850,6 +858,8 @@ static int cdns_i2c_process_msg(struct cdns_i2c *id, struct i2c_msg *msg,
 static int cdns_i2c_master_xfer(struct i2c_adapter *adap, struct i2c_msg *msgs,
 				int num)
 {
+	printk(KERN_ERR "enter cdns_i2c_master_xfer\r\n");
+
 	int ret, count;
 	u32 reg;
 	struct cdns_i2c *id = adap->algo_data;
@@ -927,6 +937,9 @@ static int cdns_i2c_master_xfer(struct i2c_adapter *adap, struct i2c_msg *msgs,
 
 			if (id->err_status & CDNS_I2C_IXR_NACK) {
 				ret = -ENXIO;
+
+				printk(KERN_ERR "id->err_status & CDNS_I2C_IXR_NACK: :%d\r\n", id->err_status);
+
 				goto out;
 			}
 			ret = -EIO;
@@ -1445,6 +1458,13 @@ static int cdns_i2c_probe(struct platform_device *pdev)
 
 	dev_info(&pdev->dev, "%u kHz mmio %08lx irq %d\n",
 		 id->i2c_clk / 1000, (unsigned long)r_mem->start, id->irq);
+
+	printk(KERN_ERR "adapter owner:%x name :%s\r\n", (unsigned int)id->adap.owner, id->adap.owner->name);
+
+	printk(KERN_ERR "cadence i2c probe successfully, algo:%x\r\n", (unsigned int)id->adap.algo);
+
+	printk(KERN_ERR "cadence i2c adatper addr%x\r\n", (unsigned int)(&id->adap));
+
 
 	return 0;
 

@@ -2704,6 +2704,8 @@ MODULE_DEVICE_TABLE(of, xilinx_dma_of_ids);
  */
 static int xilinx_dma_probe(struct platform_device *pdev)
 {
+	printk(KERN_WARNING "[nick] enter xilinx_dma_probe: \r\n");
+
 	int (*clk_init)(struct platform_device *, struct clk **, struct clk **,
 			struct clk **, struct clk **, struct clk **)
 					= axivdma_clk_init;
@@ -2721,10 +2723,17 @@ static int xilinx_dma_probe(struct platform_device *pdev)
 
 	xdev->dev = &pdev->dev;
 	if (np) {
+
+		printk(KERN_WARNING "[nick] xlinx_dma_np not NULL \r\n");
+		printk(KERN_WARNING "[nick] xlinx_dma_np:%s \r\n",np->name);
+
 		const struct of_device_id *match;
 
 		match = of_match_node(xilinx_dma_of_ids, np);
 		if (match && match->data) {
+
+			printk(KERN_WARNING "[nick] match dma \r\n");
+
 			xdev->dma_config = match->data;
 			clk_init = xdev->dma_config->clk_init;
 		}

@@ -244,6 +244,8 @@ struct dma_chan *of_dma_request_slave_channel(struct device_node *np,
 	int			ret_no_channel = -ENODEV;
 	static atomic_t		last_index;
 
+	printk(KERN_WARNING "[nick] req dma node name -np:%s ,name:%s\r\n", np->name, name);
+
 	if (!np || !name) {
 		pr_err("%s: not enough information provided\n", __func__);
 		return ERR_PTR(-ENODEV);
@@ -254,6 +256,8 @@ struct dma_chan *of_dma_request_slave_channel(struct device_node *np,
 		return ERR_PTR(-ENODEV);
 
 	count = of_property_count_strings(np, "dma-names");
+	printk(KERN_WARNING "[nick] req dma node cound :%d \r\n", count);
+
 	if (count < 0) {
 		pr_err("%s: dma-names property of node '%pOF' missing or empty\n",
 			__func__, np);
@@ -269,7 +273,11 @@ struct dma_chan *of_dma_request_slave_channel(struct device_node *np,
 		if (of_dma_match_channel(np, name,
 					 (i + start) % count,
 					 &dma_spec))
+		{
+			printk(KERN_WARNING "[nick] of_dma_match_channel\r\n");
+
 			continue;
+		}
 
 		mutex_lock(&of_dma_lock);
 		ofdma = of_dma_find_controller(&dma_spec);
@@ -277,6 +285,7 @@ struct dma_chan *of_dma_request_slave_channel(struct device_node *np,
 		if (ofdma) {
 			chan = ofdma->of_dma_xlate(&dma_spec, ofdma);
 		} else {
+			printk(KERN_WARNING "[nick] of_dma_find_controller not found\r\n");
 			ret_no_channel = -EPROBE_DEFER;
 			chan = NULL;
 		}
